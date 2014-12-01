@@ -45,11 +45,14 @@ Chat = (function (window)
 
     function sendLogin()
     {
+        var wsMsg = {};
         var loginMsg = {};
-        loginMsg.TYPE = "LOGIN";
+        wsMsg.TYPE = "ACCOUNT";
+        wsMsg.SUBTYPE = "LOGIN";
         loginMsg.USER = doc.getElementById("username").value;
         loginMsg.PASSWD = doc.getElementById("password").value;
-        socket.send(JSON.stringify(loginMsg));
+        wsMsg.LOGIN_MSG = loginMsg;
+        socket.send(JSON.stringify(wsMsg));
     }
 
     function login()
@@ -72,7 +75,6 @@ Chat = (function (window)
     function onMessage(message)
     {
         try {
-            alert(message.data);
             console.log("WS: " + message.data);
             var wsMsg = JSON.parse(message.data.trim());
             parseMsg(wsMsg);
