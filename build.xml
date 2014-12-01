@@ -10,7 +10,11 @@
         <fileset dir="WebContent/WEB-INF/lib">
             <include name="*.jar"/>
         </fileset>
+        <fileset dir="libs">
+            <include name="*.jar"/>
+        </fileset>
     </path>
+
 
     <target name="setup">
         <mkdir dir="build/classes/META-INF"/>

@@ -5,11 +5,11 @@
     <session-factory>
         <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
         <property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
-        <property name="hibernate.connection.url">jdbc:sqlite:/tmp/shop.db</property>
-        <!--<property name="hibernate.connection.url">jdbc:sqlite:c:\java3\sqlite.persistence</property>-->
+        <!--<property name="hibernate.connection.url">jdbc:sqlite:/tmp/project.db</property>-->
+        <property name="hibernate.connection.url">jdbc:sqlite:c:\java3\project.db</property>
         <property name="hibernate.connection.username"/>
         <property name="hibernate.connection.password"/>
-        <property name="hibernate.dialect">hibernate.SQLiteDialect</property>
+        <property name="hibernate.dialect">persistence.hibernate.SQLiteDialect</property>
         <property name="hibernate.search.autoregister_listeners">false</property>
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.format_sql">true</property>

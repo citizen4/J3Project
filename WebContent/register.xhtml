@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:h5="http://xmlns.jcp.org/jsf/passthrough"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>User Registration</title>
+    <h:outputStylesheet library="css" name="register.css"/>
+</h:head>
+
+<h:body>
+    <h1>Wellcome to the user registration</h1>
+
+    <h:form>
+        <h:messages errorClass="ErrMsgs"/>
+        <h:panelGrid columns="3">
+            <h:outputLabel value="First Name:" for="newfirstname"/>
+            <h:inputText id="newfirstname" label="" value="#{registrationBean.user.firstName}" h5:required="true"/>
+            <h:message for="newfirstname" errorClass="ErrMsg"/>
+            <h:outputLabel value="Last Name:" for="newlastname"/>
+            <h:inputText id="newlastname" label="" value="#{registrationBean.user.lastName}" h5:required="true"/>
+            <h:message for="newlastname" errorClass="ErrMsg"/>
+            <h:outputLabel value="E-Mail:" for="newemail"/>
+            <h:inputText id="newemail" label="" value="#{registrationBean.user.email}" h5:type="email"
+                         h5:required="true"/>
+            <h:message for="newemail" errorClass="ErrMsg"/>
+            <h:outputLabel value="Username:" for="newusername"/>
+            <h:inputText id="newusername" label="" value="#{registrationBean.user.username}"
+                         h5:pattern="[a-zA-Z0-9]{2,32}" h5:required="true"/>
+            <h:message for="newusername" errorClass="ErrMsg"/>
+            <h:outputLabel value="Password:" for="newpassword"/>
+            <h:inputSecret id="newpassword" label="" value="#{registrationBean.password}" h5:type="password"
+                           h5:pattern=".{3,32}" h5:required="true"/>
+            <h:message for="newpassword" errorClass="ErrMsg"/>
+        </h:panelGrid><br/>
+        <h:commandButton value="Register" action="#{registrationBean.doRegister}"/>
+
+    </h:form>
+</h:body>
+
+</html>

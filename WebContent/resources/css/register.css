@@ -1,0 +1,18 @@
+.ErrMsg {
+    color: red;
+    font-weight: bold;
+}
+
+.ErrMsgs {
+    color: red;
+    font-weight: bold;
+    font-style: italic;
+    border: 1px solid red;
+}
+
+.WarnMsg {
+    color: orangered;
+    font-size: larger;
+    font-weight: bold;
+    border: 2px solid orangered;
+}
