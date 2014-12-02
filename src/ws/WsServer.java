@@ -24,7 +24,6 @@ public class WsServer
     public void onOpen(Session session)
     {
         session.setMaxIdleTimeout(IDLE_TIMEOUT_SEC * 1000);
-        System.out.println(session.getId() + " has opened a connection");
     }
 
     @OnMessage
