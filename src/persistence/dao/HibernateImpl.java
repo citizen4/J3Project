@@ -5,7 +5,9 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
+import org.pmw.tinylog.Logger;
 import persistence.hibernate.HibernateUtil;
 
 import java.util.List;
@@ -14,24 +16,33 @@ public class HibernateImpl implements IUserDao
 {
 
     @Override
+    @SuppressWarnings("unchecked")
     public User findByUserName(String username)
     {
         List<User> userList;
         Session session = HibernateUtil.getSessionFactory().openSession();
+        //session.setDefaultReadOnly(true);
+        session.beginTransaction();
         Criteria criteria = session.createCriteria(User.class);
 
-        criteria.add(Restrictions.eq("username", username));
+        //criteria.add(Restrictions.eq("username", username));
+        //Case-insensitive !!!
+        criteria.add(Restrictions.ilike("username", username, MatchMode.ANYWHERE));
 
         userList = criteria.list();
+
+        session.getTransaction().commit();
         session.close();
+
         return (userList != null && userList.size() > 0) ? userList.get(0) : new User();
     }
 
     @Override
     public boolean store(User user)
     {
+
         if (isUserNameInUse(user.getUsername())) {
-            throw new RuntimeException("Username already taken");
+            throw new RuntimeException("Username is already taken!");
         }
 
         Session session = HibernateUtil.getSessionFactory().openSession();
@@ -43,7 +54,7 @@ public class HibernateImpl implements IUserDao
             tx.commit();
             return tx.wasCommitted();
         } catch (HibernateException e) {
-            e.printStackTrace();
+            Logger.error(e);
             if (tx != null) {
                 tx.rollback();
             }
