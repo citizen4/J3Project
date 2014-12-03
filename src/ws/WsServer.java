@@ -7,18 +7,29 @@ import model.User;
 import org.pmw.tinylog.Logger;
 import persistence.dao.HibernateImpl;
 import persistence.dao.IUserDao;
+import persistence.hibernate.HibernateUtil;
 import util.PasswordStore;
+import ws.protocol.ChatMsg;
 import ws.protocol.Message;
 import ws.protocol.ResultMsg;
 
-import javax.websocket.*;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.websocket.CloseReason;
+import javax.websocket.OnClose;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
+//@WebListener
 @ServerEndpoint("/ws")
-public class WsServer
+public class WsServer implements ServletContextListener
 {
    private static final int IDLE_TIMEOUT_SEC = 60;
+   private static final String[] PEER_COLORS = {"#38F", "#f00", "#ff0", "#f08", "#0ff", "#888", "#8ff", "#f6f", "#ff4", "#fff"};
+   private static final int PEER_COLOR_NB = PEER_COLORS.length;
    private final IUserDao userDao = new HibernateImpl();
    private Session thisSession = null;
 
@@ -48,8 +59,11 @@ public class WsServer
          validateUserSession();
 
          if (clientMsg.TYPE.equals("PING")) {
-            Logger.debug("Ping from: " + thisSession.getId());
             sendPong();
+         }
+
+         if (clientMsg.TYPE.equals("CHAT")) {
+            handleChat(clientMsg);
          }
 
       } catch (JsonSyntaxException e) {
@@ -57,25 +71,6 @@ public class WsServer
       }
    }
 
-    /*
-    @OnMessage
-    public void binaryMessage(Session session, ByteBuffer msg)
-    {
-        System.out.println("Binary message: " + msg.toString());
-    }
-
-   @OnMessage
-   public void onPingMsg(PongMessage msg)
-   {
-      Logger.debug("Pong from: " + thisSession.getId());
-      if (validateUserSession()) {
-         try {
-            thisSession.getBasicRemote().sendPong(msg.getApplicationData());
-         } catch (IOException e) {
-            Logger.error(e);
-         }
-      }
-   }*/
 
    @OnClose
    public void onClose()
@@ -113,6 +108,22 @@ public class WsServer
    }
 
 
+   private void handleChat(final Message clientMsg)
+   {
+      Message broadcastMsg;
+
+      if (clientMsg.SUBTYPE.equals("MSG")) {
+         ChatMsg chatMsg = new ChatMsg();
+         broadcastMsg = clientMsg;
+         chatMsg.MSG = clientMsg.CHAT_MSG.MSG;
+         chatMsg.COLOR = (String) thisSession.getUserProperties().get("COLOR");
+         chatMsg.FROM = (String) thisSession.getUserProperties().get("USER");
+         broadcastMsg.CHAT_MSG = chatMsg;
+         broadcastMessage(broadcastMsg, true);
+      }
+   }
+
+
    private void sendMessage(final Message serverMsg)
    {
       final Gson gson = new Gson();
@@ -130,8 +141,15 @@ public class WsServer
 
    private void broadcastMessage(final Message serverMsg, final boolean includeThis)
    {
+      final Gson gson = new Gson();
+      final String jsonStr = gson.toJson(serverMsg);
 
-
+      for (Session session : thisSession.getOpenSessions()) {
+         if (!includeThis && thisSession.equals(session)) {
+            continue;
+         }
+         session.getAsyncRemote().sendText(jsonStr);
+      }
    }
 
 
@@ -159,9 +177,11 @@ public class WsServer
          Logger.debug("User " + user.getUsername() + " does exist");
          if (PasswordStore.isPasswordCorrect(password, user.getPwHash())) {
             Logger.debug("Password OK");
+            int sessionId = Integer.parseInt(thisSession.getId(), 16);
             resultMsg.CODE = "OK";
             resultMsg.MSG = "Login successful!";
             thisSession.getUserProperties().put("USER", userName);
+            thisSession.getUserProperties().put("COLOR", PEER_COLORS[sessionId % PEER_COLOR_NB]);
             return resultMsg;
          }
       }
@@ -220,4 +240,16 @@ public class WsServer
       }
    }
 
+   @Override
+   public void contextInitialized(ServletContextEvent servletContextEvent)
+   {
+      Logger.debug(" executed");
+   }
+
+   @Override
+   public void contextDestroyed(ServletContextEvent servletContextEvent)
+   {
+      Logger.debug(" executed");
+      HibernateUtil.shutdown();
+   }
 }

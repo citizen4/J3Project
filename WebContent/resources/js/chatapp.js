@@ -11,20 +11,28 @@ Chat = (function (window)
 
    var loginInput = null;
    var accountBtn = null;
+   var sendBtn = null;
    var usernameInput = null;
    var passwordInput = null;
    var chatOutput = null;
+   var chatMsgList = null;
+   var chatInput = null;
    var infoOutput = null;
 
    function init()
    {
       loginInput = doc.getElementById("loginInput");
       accountBtn = doc.getElementById("accountBtn");
+      sendBtn = doc.getElementById("sendBtn");
       usernameInput = doc.getElementById("usernameInput");
       passwordInput = doc.getElementById("passwordInput");
       chatOutput = doc.getElementById("chatOutput");
+      chatInput = doc.getElementById("chatInput");
       infoOutput = doc.getElementById("infoOutput");
-      accountBtn.onclick = account;
+
+      accountBtn.onclick = accountHandler;
+      sendBtn.onclick = sendMsgHandler;
+      chatInput.onkeypress = sendMsgHandler;
    }
 
 
@@ -53,8 +61,7 @@ Chat = (function (window)
       loggedIn = false;
       accountBtn.value = "Login";
       loginInput.style.display = "";
-      //usernameInput.style.display = "";
-      //passwordInput.style.display = "";
+      passwordInput.value = "";
 
       clearInterval(keepAliveTimer);
 
@@ -85,7 +92,7 @@ Chat = (function (window)
       socket.send(JSON.stringify(wsMsg));
    }
 
-   function account()
+   function accountHandler()
    {
       if (!connected) {
          loggedIn = false;
@@ -97,6 +104,29 @@ Chat = (function (window)
       }
    }
 
+   function sendMsgHandler(evt)
+   {
+      if (!connected || !loggedIn) {
+         return;
+      }
+
+      if (evt.type == "keypress" && evt.keyCode != 13) {
+         return;
+      }
+
+      var wsMsg = {};
+      var chatMsg = {};
+
+      wsMsg.TYPE = "CHAT";
+      wsMsg.SUBTYPE = "MSG";
+      chatMsg.MSG = chatInput.value.trim();
+      wsMsg.CHAT_MSG = chatMsg;
+      chatInput.value = "";
+
+      if (chatMsg.MSG.length > 0) {
+         socket.send(JSON.stringify(wsMsg));
+      }
+   }
 
    function onOpen(msg)
    {
@@ -142,8 +172,6 @@ Chat = (function (window)
          if (msg.SUBTYPE == "LOGIN" && msg.RESULT_MSG.CODE == "OK") {
             loggedIn = true;
             accountBtn.value = "Logout";
-            //usernameInput.style.display = "none";
-            //passwordInput.style.display = "none";
             loginInput.style.display = "none";
 
             keepAliveTimer = setInterval(function ()
@@ -153,14 +181,19 @@ Chat = (function (window)
                socket.send(JSON.stringify(wsMsg));
             }, 49 * 1000);
          }
-         /*else{
-          loggedIn = false;
-          accountBtn.value = "Login";
-          }*/
 
          infoOutput.style.color = (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00";
          infoOutput.textContent = msg.RESULT_MSG.MSG;
          console.log("Account result msg: " + msg.RESULT_MSG.MSG);
+      }
+
+      if (msg.TYPE == "CHAT") {
+         var newMsgElem = doc.createElement("DIV");
+         newMsgElem.className = "ChatMsg";
+         newMsgElem.style.color = msg.CHAT_MSG.COLOR;
+         newMsgElem.innerHTML = "</div><div>" + msg.CHAT_MSG.FROM + " ></div><div>" + msg.CHAT_MSG.MSG + "</div>";
+         chatOutput.appendChild(newMsgElem);
+         chatOutput.scrollTop = chatOutput.scrollHeight;
       }
    }
 

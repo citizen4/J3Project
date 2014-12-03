@@ -46,7 +46,8 @@ body {
     height: 100%;
     border: 2px inset #666;
     font-size: 1.5em;
-    background-color: #000;
+    background-color: #444;
+    overflow-y: auto;
 }
 
 #chatInput {
@@ -56,3 +57,35 @@ body {
     height: 26px;
     font-size: 20px;
 }
+
+.ChatMsg {
+    background-color: #000;
+    padding: 2px 0 2px 0;
+    margin: 2px;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.1;
+
+}
+
+.ChatMsg > div:first-child {
+    display: inline-block;
+    font-size: 20px;
+    font-weight: bold;
+    width: 16%;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 2px 5px 0 4px;
+}
+
+.ChatMsg > div:first-child + div {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: normal;
+    width: 78%;
+    vertical-align: top;
+    padding: 2px 2px 2px 2px;
+}
+
+

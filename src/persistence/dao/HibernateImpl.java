@@ -15,58 +15,58 @@ import java.util.List;
 public class HibernateImpl implements IUserDao
 {
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public User findByUserName(String username)
-    {
-        List<User> userList;
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        //session.setDefaultReadOnly(true);
-        session.beginTransaction();
-        Criteria criteria = session.createCriteria(User.class);
+   @Override
+   @SuppressWarnings("unchecked")
+   public User findByUserName(String username)
+   {
+      List<User> userList;
+      Session session = HibernateUtil.getSessionFactory().openSession();
+      //session.setDefaultReadOnly(true);
+      session.beginTransaction();
+      Criteria criteria = session.createCriteria(User.class);
 
-        //criteria.add(Restrictions.eq("username", username));
-        //Case-insensitive !!!
-        criteria.add(Restrictions.ilike("username", username, MatchMode.ANYWHERE));
+      //criteria.add(Restrictions.eq("username", username));
+      //Case-insensitive !!!
+      criteria.add(Restrictions.ilike("username", username, MatchMode.ANYWHERE));
 
-        userList = criteria.list();
+      userList = criteria.list();
 
-        session.getTransaction().commit();
-        session.close();
+      session.getTransaction().commit();
+      session.close();
 
-        return (userList != null && userList.size() > 0) ? userList.get(0) : new User();
-    }
+      return (userList != null && userList.size() > 0) ? userList.get(0) : new User();
+   }
 
-    @Override
-    public boolean store(User user)
-    {
+   @Override
+   public boolean store(User user)
+   {
 
-        if (isUserNameInUse(user.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
-        }
+      if (isUserNameInUse(user.getUsername())) {
+         throw new RuntimeException("Username is already taken!");
+      }
 
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = null;
+      Session session = HibernateUtil.getSessionFactory().openSession();
+      Transaction tx = null;
 
-        try {
-            tx = session.beginTransaction();
-            session.saveOrUpdate(user);
-            tx.commit();
-            return tx.wasCommitted();
-        } catch (HibernateException e) {
-            Logger.error(e);
-            if (tx != null) {
-                tx.rollback();
-            }
-            return false;
-        } finally {
-            session.close();
-        }
-    }
+      try {
+         tx = session.beginTransaction();
+         session.saveOrUpdate(user);
+         tx.commit();
+         return tx.wasCommitted();
+      } catch (HibernateException e) {
+         Logger.error(e);
+         if (tx != null) {
+            tx.rollback();
+         }
+         return false;
+      } finally {
+         session.close();
+      }
+   }
 
 
-    private boolean isUserNameInUse(final String username)
-    {
-        return findByUserName(username).getId() != null;
-    }
+   private boolean isUserNameInUse(final String username)
+   {
+      return findByUserName(username).getId() != null;
+   }
 }
