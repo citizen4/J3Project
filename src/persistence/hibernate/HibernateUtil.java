@@ -13,12 +13,13 @@ public class HibernateUtil
 
     static {
 
+        /*
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
             System.err.println("Foo");
             e.printStackTrace();
-        }
+        }*/
 
         Configuration configuration = new Configuration().configure("/META-INF/hibernate.cfg.xml");
         StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties());
