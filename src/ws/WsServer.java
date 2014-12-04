@@ -19,6 +19,7 @@ import javax.servlet.ServletContextListener;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 //@WebListener
 @ServerEndpoint("/ws")
@@ -27,6 +28,7 @@ public class WsServer implements ServletContextListener
    private static final int IDLE_TIMEOUT_SEC = 60;
    private static final String[] PEER_COLORS = {"#38F", "#f00", "#ff0", "#f08", "#0ff", "#888", "#8ff", "#f6f", "#ff4", "#fff"};
    private static final int PEER_COLOR_NB = PEER_COLORS.length;
+   private static AtomicInteger usersLoggedIn = new AtomicInteger(0);
    private final IUserDao userDao = new HibernateImpl();
    private Session thisSession = null;
 
@@ -74,6 +76,7 @@ public class WsServer implements ServletContextListener
    {
       Logger.debug("onClose(): " + thisSession.getId());
       if (thisSession.getUserProperties().containsKey("USER")) {
+         usersLoggedIn.decrementAndGet();
          thisSession.getUserProperties().clear();
       }
    }
@@ -94,10 +97,12 @@ public class WsServer implements ServletContextListener
       if (clientMsg.SUBTYPE.equals("LOGIN")) {
          serverMsg.SUBTYPE = "LOGIN";
          serverMsg.RESULT_MSG = loginUser(clientMsg.LOGIN_MSG.USER, clientMsg.LOGIN_MSG.PASSWD);
+
          if (thisSession.getUserProperties().containsKey("USER")) {
             LoginMsg loginMsg = new LoginMsg();
             loginMsg.USER = (String) thisSession.getUserProperties().get("USER");
             serverMsg.LOGIN_MSG = loginMsg;
+            serverMsg.STATS_MSG = usersLoggedIn.get() + " User" + (usersLoggedIn.get() > 1 ? "s " : " ") + "online!";
          }
       }
 
@@ -117,7 +122,8 @@ public class WsServer implements ServletContextListener
       if (clientMsg.SUBTYPE.equals("MSG")) {
          ChatMsg chatMsg = new ChatMsg();
          broadcastMsg = clientMsg;
-         chatMsg.MSG = clientMsg.CHAT_MSG.MSG;
+         // you can't trust nobody ;)
+         chatMsg.MSG = clientMsg.CHAT_MSG.MSG.replace("<", "&lt;").replace("&", "&amp;");
          chatMsg.COLOR = (String) thisSession.getUserProperties().get("COLOR");
          chatMsg.FROM = (String) thisSession.getUserProperties().get("USER");
          broadcastMsg.CHAT_MSG = chatMsg;
@@ -159,6 +165,7 @@ public class WsServer implements ServletContextListener
    {
       Logger.debug("LOGIN User: " + userName + " PW: " + password);
       User user;
+      Message joinMsg = null;
       ResultMsg resultMsg = new ResultMsg();
 
       resultMsg.CODE = "ERR";
@@ -179,11 +186,23 @@ public class WsServer implements ServletContextListener
          Logger.debug("User " + user.getUsername() + " does exist");
          if (PasswordStore.isPasswordCorrect(password, user.getPwHash())) {
             Logger.debug("Password OK");
+            int userNb = usersLoggedIn.incrementAndGet();
             int sessionId = Integer.parseInt(thisSession.getId(), 16);
+
             resultMsg.CODE = "OK";
             resultMsg.MSG = "Login successful!";
+
             thisSession.getUserProperties().put("USER", user.getUsername());
             thisSession.getUserProperties().put("COLOR", PEER_COLORS[sessionId % PEER_COLOR_NB]);
+
+            joinMsg = new Message();
+            joinMsg.TYPE = "INFO";
+            joinMsg.SUBTYPE = "JOIN";
+            joinMsg.INFO_MSG = user.getUsername() + " has entered the building";
+            joinMsg.STATS_MSG = userNb + " User" + (userNb > 1 ? "s " : " ") + "online!";
+
+            broadcastMessage(joinMsg, false);
+
             return resultMsg;
          }
       }
@@ -198,8 +217,19 @@ public class WsServer implements ServletContextListener
       ResultMsg resultMsg = new ResultMsg();
 
       if (thisSession.getUserProperties().containsKey("USER")) {
+         int userNb = usersLoggedIn.decrementAndGet();
+
          resultMsg.CODE = "OK";
          resultMsg.MSG = "You have successfully logged out!";
+
+         Message unjoinMsg = new Message();
+         unjoinMsg.TYPE = "INFO";
+         unjoinMsg.SUBTYPE = "JOIN";
+         unjoinMsg.INFO_MSG = thisSession.getUserProperties().get("USER") + " has left the building";
+         unjoinMsg.STATS_MSG = userNb + " User" + (userNb > 1 ? "s " : " ") + "online!";
+
+         broadcastMessage(unjoinMsg, false);
+
          thisSession.getUserProperties().clear();
       } else {
          resultMsg.CODE = "ERR";
@@ -210,7 +240,9 @@ public class WsServer implements ServletContextListener
    }
 
    /**
-    * @return returns true only if connection is open AND authorized
+    * Validate this session
+    *
+    * @return "true" only if connection is open AND authorized
     */
    private boolean validateUserSession()
    {

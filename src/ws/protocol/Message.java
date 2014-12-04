@@ -8,4 +8,5 @@ public class Message
    public LoginMsg LOGIN_MSG;
    public ChatMsg CHAT_MSG;
    public String INFO_MSG;
+   public String STATS_MSG;
 }

@@ -44,9 +44,11 @@ Chat = (function (window)
    {
       connected = false;
       loggedIn = false;
+
       $("accountBtn").value = "Login";
       $("loginInput").style.display = "";
       $("loginGreeting").style.display = "none";
+      $("statsOutput").textContent = "";
       $("passwordInput").value = "";
 
       clearInterval(keepAliveTimer);
@@ -93,6 +95,7 @@ Chat = (function (window)
    function sendMsgHandler(evt)
    {
       if (!connected || !loggedIn) {
+         showInfo("Log in first, Stranger!")
          return;
       }
 
@@ -161,6 +164,7 @@ Chat = (function (window)
             $("loginInput").style.display = "none";
             $("loginGreeting").textContent = "Hi " + msg.LOGIN_MSG.USER + "! ";
             $("loginGreeting").style.display = "";
+            $("statsOutput").textContent = "\u25cf " + msg.STATS_MSG;
 
             keepAliveTimer = setInterval(function ()
             {
@@ -170,10 +174,10 @@ Chat = (function (window)
             }, 49 * 1000);
          }
 
-         showLoginInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00");
-         showInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00");
+         showLoginInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#2f2" : "#f44");
 
          console.log("Account result msg: " + msg.RESULT_MSG.MSG);
+         return;
       }
 
       if (msg.TYPE == "CHAT") {
@@ -183,17 +187,27 @@ Chat = (function (window)
          newMsgElem.innerHTML = "<div>" + msg.CHAT_MSG.FROM + " ></div><div>" + msg.CHAT_MSG.MSG + "</div>";
          $("chatOutput").appendChild(newMsgElem);
          $("chatOutput").scrollTop = $("chatOutput").scrollHeight;
+         return;
       }
+
+      if (msg.TYPE == "INFO") {
+         if (msg.SUBTYPE == "JOIN") {
+            showInfo(msg.INFO_MSG, "#99f");
+            $("statsOutput").textContent = "\u25cf " + msg.STATS_MSG;
+            return;
+         }
+      }
+
    }
 
    function showInfo(infoMsg, color)
    {
       $("infoOutput").textContent = infoMsg;
-      $("infoOutput").style.color = color;
-      $("infoOutput").style.top = "0";
+      //$("infoOutput").style.color = color;
+      $("infoOutput").style.top = "8px";
       setTimeout(function ()
       {
-         $("infoOutput").style.top = "30px";
+         $("infoOutput").style.top = "40px";
       }, 4000);
    }
 
@@ -201,10 +215,10 @@ Chat = (function (window)
    {
       $("loginInfoOutput").textContent = infoMsg;
       $("loginInfoOutput").style.color = color;
-      $("loginInfoOutput").style.top = "0";
+      $("loginInfoOutput").style.top = "45px";
       setTimeout(function ()
       {
-         $("loginInfoOutput").style.top = "-35px";
+         $("loginInfoOutput").style.top = "0px";
       }, 3000);
    }
 
