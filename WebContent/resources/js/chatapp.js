@@ -1,5 +1,9 @@
 Chat = (function (window)
 {
+   var $ = function (e)
+   {
+      return document.getElementById(e);
+   };
    var doc = document;
    var theHost = location.host;
    var contextPath = location.pathname.slice(0, location.pathname.lastIndexOf("/"));
@@ -9,30 +13,11 @@ Chat = (function (window)
    var keepAliveTimer = null;
    var state = {0: "CONNECTING", 1: "OPEN", 2: "CLOSING", 3: "CLOSED"};
 
-   var loginInput = null;
-   var accountBtn = null;
-   var sendBtn = null;
-   var usernameInput = null;
-   var passwordInput = null;
-   var chatOutput = null;
-   var chatMsgList = null;
-   var chatInput = null;
-   var infoOutput = null;
-
    function init()
    {
-      loginInput = doc.getElementById("loginInput");
-      accountBtn = doc.getElementById("accountBtn");
-      sendBtn = doc.getElementById("sendBtn");
-      usernameInput = doc.getElementById("usernameInput");
-      passwordInput = doc.getElementById("passwordInput");
-      chatOutput = doc.getElementById("chatOutput");
-      chatInput = doc.getElementById("chatInput");
-      infoOutput = doc.getElementById("infoOutput");
-
-      accountBtn.onclick = accountHandler;
-      sendBtn.onclick = sendMsgHandler;
-      chatInput.onkeypress = sendMsgHandler;
+      $("accountBtn").onclick = accountHandler;
+      $("sendBtn").onclick = sendMsgHandler;
+      $("chatInput").onkeypress = sendMsgHandler;
    }
 
 
@@ -59,9 +44,10 @@ Chat = (function (window)
    {
       connected = false;
       loggedIn = false;
-      accountBtn.value = "Login";
-      loginInput.style.display = "";
-      passwordInput.value = "";
+      $("accountBtn").value = "Login";
+      $("loginInput").style.display = "";
+      $("loginGreeting").style.display = "none";
+      $("passwordInput").value = "";
 
       clearInterval(keepAliveTimer);
 
@@ -78,8 +64,8 @@ Chat = (function (window)
       var loginMsg = {};
       wsMsg.TYPE = "ACCOUNT";
       wsMsg.SUBTYPE = "LOGIN";
-      loginMsg.USER = usernameInput.value;
-      loginMsg.PASSWD = passwordInput.value;
+      loginMsg.USER = $("usernameInput").value;
+      loginMsg.PASSWD = $("passwordInput").value;
       wsMsg.LOGIN_MSG = loginMsg;
       socket.send(JSON.stringify(wsMsg));
    }
@@ -119,9 +105,9 @@ Chat = (function (window)
 
       wsMsg.TYPE = "CHAT";
       wsMsg.SUBTYPE = "MSG";
-      chatMsg.MSG = chatInput.value.trim();
+      chatMsg.MSG = $("chatInput").value.trim();
       wsMsg.CHAT_MSG = chatMsg;
-      chatInput.value = "";
+      $("chatInput").value = "";
 
       if (chatMsg.MSG.length > 0) {
          socket.send(JSON.stringify(wsMsg));
@@ -171,8 +157,10 @@ Chat = (function (window)
 
          if (msg.SUBTYPE == "LOGIN" && msg.RESULT_MSG.CODE == "OK") {
             loggedIn = true;
-            accountBtn.value = "Logout";
-            loginInput.style.display = "none";
+            $("accountBtn").value = "Logout";
+            $("loginInput").style.display = "none";
+            $("loginGreeting").textContent = "Hi " + msg.LOGIN_MSG.USER + "! ";
+            $("loginGreeting").style.display = "";
 
             keepAliveTimer = setInterval(function ()
             {
@@ -182,8 +170,9 @@ Chat = (function (window)
             }, 49 * 1000);
          }
 
-         infoOutput.style.color = (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00";
-         infoOutput.textContent = msg.RESULT_MSG.MSG;
+         showLoginInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00");
+         showInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#0f0" : "#f00");
+
          console.log("Account result msg: " + msg.RESULT_MSG.MSG);
       }
 
@@ -191,11 +180,34 @@ Chat = (function (window)
          var newMsgElem = doc.createElement("DIV");
          newMsgElem.className = "ChatMsg";
          newMsgElem.style.color = msg.CHAT_MSG.COLOR;
-         newMsgElem.innerHTML = "</div><div>" + msg.CHAT_MSG.FROM + " ></div><div>" + msg.CHAT_MSG.MSG + "</div>";
-         chatOutput.appendChild(newMsgElem);
-         chatOutput.scrollTop = chatOutput.scrollHeight;
+         newMsgElem.innerHTML = "<div>" + msg.CHAT_MSG.FROM + " ></div><div>" + msg.CHAT_MSG.MSG + "</div>";
+         $("chatOutput").appendChild(newMsgElem);
+         $("chatOutput").scrollTop = $("chatOutput").scrollHeight;
       }
    }
+
+   function showInfo(infoMsg, color)
+   {
+      $("infoOutput").textContent = infoMsg;
+      $("infoOutput").style.color = color;
+      $("infoOutput").style.top = "0";
+      setTimeout(function ()
+      {
+         $("infoOutput").style.top = "30px";
+      }, 4000);
+   }
+
+   function showLoginInfo(infoMsg, color)
+   {
+      $("loginInfoOutput").textContent = infoMsg;
+      $("loginInfoOutput").style.color = color;
+      $("loginInfoOutput").style.top = "0";
+      setTimeout(function ()
+      {
+         $("loginInfoOutput").style.top = "-35px";
+      }, 3000);
+   }
+
 
    init();
 

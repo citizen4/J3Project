@@ -10,16 +10,13 @@ import persistence.dao.IUserDao;
 import persistence.hibernate.HibernateUtil;
 import util.PasswordStore;
 import ws.protocol.ChatMsg;
+import ws.protocol.LoginMsg;
 import ws.protocol.Message;
 import ws.protocol.ResultMsg;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.websocket.CloseReason;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
+import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 
@@ -97,6 +94,11 @@ public class WsServer implements ServletContextListener
       if (clientMsg.SUBTYPE.equals("LOGIN")) {
          serverMsg.SUBTYPE = "LOGIN";
          serverMsg.RESULT_MSG = loginUser(clientMsg.LOGIN_MSG.USER, clientMsg.LOGIN_MSG.PASSWD);
+         if (thisSession.getUserProperties().containsKey("USER")) {
+            LoginMsg loginMsg = new LoginMsg();
+            loginMsg.USER = (String) thisSession.getUserProperties().get("USER");
+            serverMsg.LOGIN_MSG = loginMsg;
+         }
       }
 
       if (clientMsg.SUBTYPE.equals("LOGOUT")) {
@@ -180,7 +182,7 @@ public class WsServer implements ServletContextListener
             int sessionId = Integer.parseInt(thisSession.getId(), 16);
             resultMsg.CODE = "OK";
             resultMsg.MSG = "Login successful!";
-            thisSession.getUserProperties().put("USER", userName);
+            thisSession.getUserProperties().put("USER", user.getUsername());
             thisSession.getUserProperties().put("COLOR", PEER_COLORS[sessionId % PEER_COLOR_NB]);
             return resultMsg;
          }
