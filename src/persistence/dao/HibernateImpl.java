@@ -14,7 +14,6 @@ import java.util.List;
 
 public class HibernateImpl implements IUserDao
 {
-
    @Override
    @SuppressWarnings("unchecked")
    public User findByUserName(String username)
@@ -40,9 +39,8 @@ public class HibernateImpl implements IUserDao
    @Override
    public boolean store(User user)
    {
-
       if (isUserNameInUse(user.getUsername())) {
-         throw new RuntimeException("Username is already taken!");
+         throw new RuntimeException("Username \"" + user.getUsername() + "\" is already taken!");
       }
 
       Session session = HibernateUtil.getSessionFactory().openSession();
@@ -63,7 +61,6 @@ public class HibernateImpl implements IUserDao
          session.close();
       }
    }
-
 
    private boolean isUserNameInUse(final String username)
    {

@@ -11,6 +11,8 @@ Chat = (function (window)
    var loggedIn = false;
    var socket = null;
    var keepAliveTimer = null;
+   var msgCounter = 0;
+   //var lastHeartBeat = 0;
    var state = {0: "CONNECTING", 1: "OPEN", 2: "CLOSING", 3: "CLOSED"};
 
    function init()
@@ -19,7 +21,6 @@ Chat = (function (window)
       $("sendBtn").onclick = sendMsgHandler;
       $("chatInput").onkeypress = sendMsgHandler;
    }
-
 
    function connect(url)
    {
@@ -50,6 +51,9 @@ Chat = (function (window)
       $("loginGreeting").style.display = "none";
       $("statsOutput").textContent = "";
       $("passwordInput").value = "";
+      $("chatOutput").innerHTML = "";
+      $("statsOutput").style.color = "#666";
+      $("statsOutput").textContent = "\u2022 Offline!";
 
       clearInterval(keepAliveTimer);
 
@@ -160,11 +164,14 @@ Chat = (function (window)
 
          if (msg.SUBTYPE == "LOGIN" && msg.RESULT_MSG.CODE == "OK") {
             loggedIn = true;
+
             $("accountBtn").value = "Logout";
             $("loginInput").style.display = "none";
-            $("loginGreeting").textContent = "Hi " + msg.LOGIN_MSG.USER + "! ";
+            $("loginGreeting").textContent = "Hi, " + msg.LOGIN_MSG.USER + "! ";
             $("loginGreeting").style.display = "";
-            $("statsOutput").textContent = "\u25cf " + msg.STATS_MSG;
+            $("doLoginStranger").style.display = "none";
+            $("statsOutput").style.color = "#0f0";
+            $("statsOutput").textContent = "\u2022 " + msg.STATS_MSG;
 
             keepAliveTimer = setInterval(function ()
             {
@@ -176,24 +183,28 @@ Chat = (function (window)
 
          showLoginInfo(msg.RESULT_MSG.MSG, (msg.RESULT_MSG.CODE == "OK") ? "#2f2" : "#f44");
 
-         console.log("Account result msg: " + msg.RESULT_MSG.MSG);
          return;
       }
 
       if (msg.TYPE == "CHAT") {
          var newMsgElem = doc.createElement("DIV");
          newMsgElem.className = "ChatMsg";
+         newMsgElem.id = "msg" + msgCounter;
          newMsgElem.style.color = msg.CHAT_MSG.COLOR;
          newMsgElem.innerHTML = "<div>" + msg.CHAT_MSG.FROM + " ></div><div>" + msg.CHAT_MSG.MSG + "</div>";
          $("chatOutput").appendChild(newMsgElem);
          $("chatOutput").scrollTop = $("chatOutput").scrollHeight;
+         //$("msg"+msgCounter).style.opacity = "1.0";
+         $("msg" + msgCounter).style.left = "0";
+         msgCounter++;
          return;
       }
 
       if (msg.TYPE == "INFO") {
          if (msg.SUBTYPE == "JOIN") {
             showInfo(msg.INFO_MSG, "#99f");
-            $("statsOutput").textContent = "\u25cf " + msg.STATS_MSG;
+            //$("statsOutput").style.color = "#0f0";
+            $("statsOutput").textContent = "\u2022 " + msg.STATS_MSG;
             return;
          }
       }
@@ -203,8 +214,8 @@ Chat = (function (window)
    function showInfo(infoMsg, color)
    {
       $("infoOutput").textContent = infoMsg;
-      //$("infoOutput").style.color = color;
       $("infoOutput").style.top = "8px";
+
       setTimeout(function ()
       {
          $("infoOutput").style.top = "40px";
@@ -216,6 +227,7 @@ Chat = (function (window)
       $("loginInfoOutput").textContent = infoMsg;
       $("loginInfoOutput").style.color = color;
       $("loginInfoOutput").style.top = "45px";
+
       setTimeout(function ()
       {
          $("loginInfoOutput").style.top = "0px";

@@ -75,9 +75,9 @@ public class WsServer implements ServletContextListener
    public void onClose()
    {
       Logger.debug("onClose(): " + thisSession.getId());
+      // handle close without logout (peer went down due to network trouble etc.)
       if (thisSession.getUserProperties().containsKey("USER")) {
-         usersLoggedIn.decrementAndGet();
-         thisSession.getUserProperties().clear();
+         logoutUser();
       }
    }
 
