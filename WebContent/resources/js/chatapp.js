@@ -49,7 +49,6 @@ Chat = (function (window)
       $("accountBtn").value = "Login";
       $("loginInput").style.display = "";
       $("loginGreeting").style.display = "none";
-      $("statsOutput").textContent = "";
       $("passwordInput").value = "";
       $("chatOutput").innerHTML = "";
       $("statsOutput").style.color = "#666";
@@ -135,7 +134,7 @@ Chat = (function (window)
          var wsMsg = JSON.parse(message.data.trim());
          parseMsg(wsMsg);
       } catch (err) {
-         console.log("WS: " + err.toString());
+         console.log("WS: " + err);
       }
    }
 
@@ -169,9 +168,13 @@ Chat = (function (window)
             $("loginInput").style.display = "none";
             $("loginGreeting").textContent = "Hi, " + msg.LOGIN_MSG.USER + "! ";
             $("loginGreeting").style.display = "";
-            $("doLoginStranger").style.display = "none";
             $("statsOutput").style.color = "#0f0";
             $("statsOutput").textContent = "\u2022 " + msg.STATS_MSG;
+
+            //works only the first time dude!
+            if ($("doLoginStranger")) {
+               $("doLoginStranger").style.display = "none";
+            }
 
             keepAliveTimer = setInterval(function ()
             {
