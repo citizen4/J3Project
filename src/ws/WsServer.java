@@ -19,6 +19,10 @@ import javax.servlet.ServletContextListener;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 //@WebListener
@@ -28,6 +32,7 @@ public class WsServer implements ServletContextListener
    private static final int IDLE_TIMEOUT_SEC = 60;
    private static final String[] PEER_COLORS = {"#38F", "#f00", "#ff0", "#f08", "#0ff", "#888", "#8ff", "#f6f", "#ff4", "#fff"};
    private static final int PEER_COLOR_NB = PEER_COLORS.length;
+   private static final AbstractMap<String, String> userColorMap = new ConcurrentHashMap<>();
    private static AtomicInteger usersLoggedIn = new AtomicInteger(0);
    private final IUserDao userDao = new HibernateImpl();
    private Session thisSession = null;
@@ -186,6 +191,7 @@ public class WsServer implements ServletContextListener
          Logger.debug("User " + user.getUsername() + " does exist");
          if (PasswordStore.isPasswordCorrect(password, user.getPwHash())) {
             Logger.debug("Password OK");
+            String userColor = "";
             int userNb = usersLoggedIn.incrementAndGet();
             int sessionId = Integer.parseInt(thisSession.getId(), 16);
 
@@ -193,7 +199,16 @@ public class WsServer implements ServletContextListener
             resultMsg.MSG = "Login successful!";
 
             thisSession.getUserProperties().put("USER", user.getUsername());
-            thisSession.getUserProperties().put("COLOR", PEER_COLORS[sessionId % PEER_COLOR_NB]);
+
+            //if a user is active more than once, give him the same color:
+            if (userColorMap.containsKey(user.getUsername())) {
+               userColor = userColorMap.get(user.getUsername());
+            } else {
+               userColor = PEER_COLORS[sessionId % PEER_COLOR_NB];
+               userColorMap.put(user.getUsername(), userColor);
+            }
+
+            thisSession.getUserProperties().put("COLOR", userColor);
 
             joinMsg = new Message();
             joinMsg.TYPE = "INFO";

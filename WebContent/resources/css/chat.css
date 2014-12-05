@@ -101,8 +101,8 @@ header {
     margin-left: auto;
     margin-right: auto;
     border-radius: 6px;
-    border: 1px outset #88f;
-    background: rgba(0, 0, 0, 0.4);
+    border: 1px outset #f33;
+    background: rgba(255, 0, 0, 0.5);
 }
 
 
@@ -133,7 +133,7 @@ header {
     right: 8px;
     border: 2px inset #ccc;
     font-size: 1.5em;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: #444;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -190,7 +190,7 @@ header {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 0px 5px 0 0px;
+    padding: 2px 5px 0 3px;
 
 }
 
@@ -198,7 +198,7 @@ header {
     display: inline-block;
     font-size: 18px;
     font-weight: normal;
-    width: 82%;
+    width: 80%;
     vertical-align: top;
     padding: 4px 4px;
     background: linear-gradient(to bottom, rgb(60, 60, 60) 0%, rgb(30, 30, 30) 4%, rgb(40, 40, 40) 96%, rgb(0, 0, 0) 100%);
